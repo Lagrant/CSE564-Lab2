@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Lab2</title>
+
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/main.css') }}" type="text/css">
+        <script src="{{ url_for('static', filename='scripts/task2.js') }}"></script>
+        <script src="{{ url_for('static', filename='scripts/aux.js') }}"></script>
+        <script src="{{ url_for('static', filename='scripts/d3.v3.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='scripts/jquery.min.js') }}"></script>
+</head>
+    </head>
+    <body>
+        <div class="menu">
+            Upload File:
+            <form>
+                <input type="file" id="upload" onchange="uploadFile(this)" />
+            </form>
+          
+        </div>
+        <div id="vis" class="vis">
+            <div id="data-mds-plot" class="data plot"></div>
+            <div id="var-mds-plot" class="var plot"></div>
+        </div>
+    </body>
+</html>
