@@ -1,17 +1,27 @@
-var margin = { left: 90, right: 60, top: 70, bottom: 90 };
 var intrDimIdx = -1;
 var attrs = [{'attr': ''}];
-
+var clusters = [];
 
 var uploadComp = function(evt){
-    res = evt.target.responseText;
-    pca = JSON.parse(res)
-    eigenvalues = pca['eigenvalues'];
-    coors = pca['coors'];
-    axes = pca['axes'];
-
-    screePlot(eigenvalues, axes);
-    biplot(coors, axes);
+    token = evt.target.responseText;
+    console.log(token);
+    $.ajax({
+        type: 'POST',
+        url: '/pca',
+        contentType: 'application/json; charset=UTF-8',
+        success: function (res) {
+            if (res instanceof String) {
+                res = JSON.parse(res);
+            }
+            eigenvalues = res['eigenvalues'];
+            coors = res['coors'];
+            axes = res['axes'];
+            
+            screePlot(eigenvalues, axes);
+            biplot(coors, axes);
+        },
+        error: () => { alert('Fail to do pca!'); }
+    });
 }
 
 function screePlot(data, axes) {
@@ -527,45 +537,4 @@ function scatterPlotMatrix() {
         }
         return c;
     }
-}
-
-var cluster = function () {
-    // ob.style.backgroundColor = 
-    $.ajax({
-        type: 'POST',
-        url: 'cluster',
-        contentType: 'application/json; charset=UTF-8',
-        success: function (res) {
-            if (res instanceof String) {
-                res = JSON.parse(res);
-            }
-            numOfClusters = 9; // this is verified at the backend server
-            var color = d3.scale.category20();
-            res.forEach(function (d, i) {
-                d3.selectAll('.point'+i)
-                    .style('fill', color(d));
-            });
-            colors = [];
-            for (let i = 0; i < numOfClusters; i++) {
-                colors.push(color(i));
-            }
-            legend = d3.selectAll('.legend');
-            legend.selectAll('*').remove();
-            colors.forEach(function (d, i) {
-                legend.append('circle')
-                    .attr('cx', -75 + i * 65)
-                    .attr('cy', 7)
-                    .attr('r', 3.5)
-                    .attr('fill', d)
-                    .attr('fill-opacity', 0.7);
-                legend.append('text')
-                    .attr('text-ancor', 'start')
-                    .attr('x', -70 + i * 65)
-                    .attr('y', 10)
-                    .text('cluster' + i);
-            })
-
-        },
-        error: () => { alert('Fail to cluster'); }
-    });
 }

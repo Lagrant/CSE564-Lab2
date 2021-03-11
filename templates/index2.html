@@ -7,10 +7,11 @@
         <title>Lab2</title>
 
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/main.css') }}" type="text/css">
-        <script src="{{ url_for('static', filename='scripts/task2.js') }}"></script>
-        <script src="{{ url_for('static', filename='scripts/aux.js') }}"></script>
+
         <script src="{{ url_for('static', filename='scripts/d3.v3.min.js') }}"></script>
         <script src="{{ url_for('static', filename='scripts/jquery.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='scripts/aux.js') }}"></script>
+        <script src="{{ url_for('static', filename='scripts/lab2b.js') }}"></script>
 </head>
     </head>
     <body>
@@ -19,7 +20,10 @@
             <form>
                 <input type="file" id="upload" onchange="uploadFile(this)" />
             </form>
-          
+            
+            <div class='cluster-button' onclick="cluster()">
+                Cluster
+            </div>
         </div>
         <div id="vis" class="vis">
             <div id="data-mds-plot" class="data plot"></div>

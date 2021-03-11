@@ -1,19 +1,22 @@
-from flask import Flask, render_template, request, flash, Response, url_for, send_from_directory, redirect
+from flask import Flask, render_template, request, flash, Response, url_for, redirect, jsonify
 from werkzeug.utils import secure_filename
 import json
-from flask import jsonify
-import re
 from os.path import join, dirname, realpath
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
+from scipy.spatial.distance import squareform, pdist
+from sklearn.manifold import MDS
 
 app = Flask(__name__)
 log = app.logger
 
 full_file_name = ''
 components = []
+frame = pd.DataFrame()
+lsttypes = []
+nframe = pd.DataFrame()
 
 @app.route('/')
 def index_page(name=None):
@@ -40,6 +43,9 @@ def save():
         return redirect(request.url)
     
     global full_file_name
+    global frame
+    global lsttypes
+    global nframe
 
     file_folder = './uploads/'
     f = request.files['file']
@@ -49,26 +55,27 @@ def save():
     full_file_name = file_folder + fname
     f.save(full_file_name)
 
-    eigenvalues, coors, axes = do_pca(full_file_name)
-    resp = json.dumps({'eigenvalues': eigenvalues, 'coors':coors, 'axes':axes})
-    return Response(resp, status=200)
-
-@app.route('/retrieve_attrs', methods=['POST', 'GET'])
-def retrieve():
-    if (request.method == 'GET'):
-        return 'Invalid request'
-    
     frame = pd.read_csv(full_file_name)
     frame.drop(['name', 'Total', 'Generation'], axis=1, inplace=True)
+    frame['Legendary'] = frame['Legendary'].apply(lambda x: int(x))
     lsttypes = []
     for i in frame.columns:
         if(type(frame[i].iloc[0]) is str):
             continue
         else:
             lsttypes.append(i)
+    nframe = frame[lsttypes]
+
+    return Response('File uploaded successfully', status=200)
+
+@app.route('/retrieve_attrs', methods=['POST', 'GET'])
+def retrieve():
+    if (request.method == 'GET'):
+        return 'Invalid request'
+    
     rt_attr = {'axes': components.tolist(), 'attrs': lsttypes}
     
-    return jsonify(rt_attr)
+    return jsonify(rt_attr) # dict, list, string
 
 @app.route('/retrieve_scatter_coors', methods=['POST', 'GET'])
 def scatters():
@@ -92,41 +99,44 @@ def scatters():
 def cluster():
     if (request.method == 'GET'):
         return 'Invalid request'
-    frame = pd.read_csv(full_file_name)
-    frame.drop(['name', 'Total', 'Generation'], axis=1, inplace=True)
-    frame['Legendary'] = frame['Legendary'].apply(lambda x: int(x))
-    lsttypes = []
-    for i in frame.columns:
-        if(type(frame[i].iloc[0]) is str):
-            continue
-        else:
-            lsttypes.append(i)
-    frame = frame[lsttypes]
-    kmeans = KMeans(n_clusters=9, random_state=0).fit(frame.values)
-    print(kmeans_estimate(frame, kmeans))
+
+    kmeans = KMeans(n_clusters=9, random_state=0).fit(nframe.values)
     return jsonify(kmeans.labels_.tolist())
 
-def do_pca(file_path):
+@app.route('/pca', methods=['POST','GET'])
+def do_pca():
     global components
 
-    frame = pd.read_csv(file_path)
-    frame.drop(['name', 'Total', 'Generation'], axis=1, inplace=True)
-    frame['Legendary'] = frame['Legendary'].apply(lambda x: int(x))
-    lsttypes = []
-    for i in frame.columns:
-        if(type(frame[i].iloc[0]) is str):
-            continue
-        else:
-            lsttypes.append(i)
-    nframe = frame[lsttypes]
     pca = PCA()
     pca.fit(nframe.values)
     components = pca.components_
     compos = components[:2]
     coors = scatter_biplot(nframe, compos)
     axes = get_axis(compos.tolist(), [0,1])
-    
-    return pca.explained_variance_ratio_.tolist(), coors, axes
+    eigenvalues = pca.explained_variance_ratio_.tolist()
+    resp = {'eigenvalues': eigenvalues, 'coors':coors, 'axes':axes}
+    return resp
+
+@app.route('/mds', methods=['POST','GET'])
+def do_mds():
+    disMatrix = pd.DataFrame(squareform(pdist(nframe)), columns=nframe.index, index=nframe.index)
+    data_embedding = MDS(n_components=2, dissimilarity='precomputed')
+    data_points = data_embedding.fit_transform(disMatrix)
+
+    corrMatrix = nframe.corr()
+    var_embedding = MDS(n_components=2, dissimilarity='precomputed')
+    var_points = var_embedding.fit_transform(corrMatrix)
+    # pd.DataFrame(data_points).to_csv('./data/data_points.csv', index=False)
+    # pd.DataFrame(var_points).to_csv('./data/var_points.csv', index=False)
+
+    return {'data': data_points.tolist(), 'var': var_points.tolist(), 'varNames': lsttypes}
+
+@app.route('/mds1', methods=['POST','GET'])
+def do_mds1():
+    data_points = pd.read_csv('./data/data_points.csv')
+    var_points = pd.read_csv('./data/var_points.csv')
+
+    return {'data': data_points.values.tolist(), 'var': var_points.values.tolist(), 'varNames': lsttypes}
 
 def get_axis(compos, idx):
     axes = []
