@@ -105,6 +105,9 @@ def cluster():
 
 @app.route('/pca', methods=['POST','GET'])
 def do_pca():
+    if (request.method == 'GET'):
+        return 'Invalid request'
+    
     global components
 
     pca = PCA()
@@ -119,6 +122,9 @@ def do_pca():
 
 @app.route('/mds', methods=['POST','GET'])
 def do_mds():
+    if (request.method == 'GET'):
+        return 'Invalid request'
+    
     disMatrix = pd.DataFrame(squareform(pdist(nframe)), columns=nframe.index, index=nframe.index)
     data_embedding = MDS(n_components=2, dissimilarity='precomputed')
     data_points = data_embedding.fit_transform(disMatrix)
@@ -133,10 +139,26 @@ def do_mds():
 
 @app.route('/mds1', methods=['POST','GET'])
 def do_mds1():
+    if (request.method == 'GET'):
+        return 'Invalid request'
+    
     data_points = pd.read_csv('./data/data_points.csv')
     var_points = pd.read_csv('./data/var_points.csv')
 
     return {'data': data_points.values.tolist(), 'var': var_points.values.tolist(), 'varNames': lsttypes}
+
+@app.route('/full_dataset', methods=['POST','GET'])
+def retrieve_full_dataset():
+    if (request.method == 'GET'):
+        return 'Invalid request'
+
+    frame = pd.read_csv(full_file_name)
+    frame.drop(['name', 'Type 2'], axis=1, inplace=True)
+    # frame['Legendary'] = frame['Legendary'].apply(lambda x: int(x))
+    data = frame.to_dict()
+    for col in data:
+        data[col] = list(data[col].values())
+    return data
 
 def get_axis(compos, idx):
     axes = []

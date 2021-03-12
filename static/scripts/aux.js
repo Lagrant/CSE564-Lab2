@@ -38,6 +38,12 @@ var cluster = function () {
                 d3.selectAll('.point'+i)
                     .style('fill', color(d));
             });
+            if (d3.select('#paral-coor-plot')[0][0] !== null) {
+                res.forEach(function (d, i) {
+                    d3.selectAll('.line'+i)
+                        .style('stroke', color(d));
+                });
+            }
             colors = [];
             for (let i = 0; i < numOfClusters; i++) {
                 colors.push(color(i));

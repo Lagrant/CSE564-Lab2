@@ -45,14 +45,15 @@ var uploadComp = function(evt) {
             })();
             plotScatter(d3.select('#data-mds-plot'), dataCoors);
             plotScatter(d3.select('#var-mds-plot'), varCoors);
+            parallelCoorPlot(d3.select('#paral-coor-plot'));
         },
         error: () => { alert('Fail to do MDS!'); }
     });
 }
 
 function plotScatter(div, points) {
-    var width = parseInt(div.style('width')) - margin.top - margin.bottom;
-    var height = parseInt(div.style('height')) - margin.left - margin.right;
+    var width = parseInt(div.style('width')) - margin.left - margin.right;
+    var height = parseInt(div.style('height')) - margin.top - margin.bottom;
 
     var x = d3.scale.linear()
         .domain(d3.extent(points.coors, (d) => { return d[0]; }))
@@ -72,7 +73,7 @@ function plotScatter(div, points) {
         .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)
         .append('g')
-        .attr('transform', 'translate(' + margin.left + ',' + margin.right + ')');
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
     
     svg.append('g')
         .selectAll('.dot')
@@ -152,4 +153,92 @@ function plotScatter(div, points) {
             .text((_, i) => { return points.names[i]});
     }
 
+}
+
+function parallelCoorPlot(div) {
+    var width = parseInt(div.style('width')) - margin.left - margin.right;
+    var height = parseInt(div.style('height')) - margin.top - margin.left;
+
+    var svg = div.append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr('transform', 'translate(' + (margin.left - 70) + ',' + margin.top + ')');
+    $.ajax({
+        type: 'POST',
+        url: '/full_dataset',
+        contentType: 'application/json; charset=UTF-8',
+        success: function (res) {
+            if (res instanceof String) {
+                res = JSON.parse(res);
+            }
+            var attrs = d3.keys(res);
+            var y = {};
+            attrs.forEach(function (attr) {
+                if (typeof res[attr][0] === 'number') {
+                    y[attr] = d3.scale.linear()
+                        .domain(d3.extent(res[attr]))
+                        .range([height, 0]);
+                } else {
+                    let types = {};
+                    res[attr].forEach(function (d) {
+                        if (types[d] === undefined) {
+                            types[d] = 1;
+                        }
+                    });
+                    types = d3.keys(types);
+                    y[attr] = d3.scale.ordinal()
+                        .domain(types)
+                        .rangeRoundBands([height, 0]);
+                }
+            });
+            var x = d3.scale.ordinal()
+                .domain(attrs)
+                .rangePoints([0, width + 150], 1);
+            
+            var data = [];
+            res[attrs[0]].forEach(function (_, i) {
+                temp = {};
+                attrs.forEach(function (attr) {
+                    temp[attr] = res[attr][i];
+                });
+                data.push(temp);
+            });
+            svg.selectAll(".paral-lines")
+                .data(data)
+                .enter().append("path")
+                .attr("d",  path)
+                .attr('class', (_, i) => { return 'line' + i; })
+                .style("fill", "none")
+                .style("stroke", "steelblue")
+                .style("opacity", 0.5);
+
+            svg.selectAll(".y.axis")
+                .data(attrs).enter()
+                .append("g")
+                .attr('class', 'y axis')
+                .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+                .each(function(d) { 
+                    d3.select(this).call(d3.svg.axis()
+                        .scale(y[d])
+                        .orient('left')); 
+                })
+                .append("text")
+                .style("text-anchor", "middle")
+                .attr("y", -9)
+                .text(function(d) { return d; })
+                .style("fill", "black");
+
+            function path(d) {
+                return d3.svg.line()(attrs.map(function (attr) {
+                    if (typeof res[attr][0] !== 'number') {
+                        return [x(attr), y[attr](d[attr]) + y[attr].rangeBand() / 2];
+                    } else {
+                        return [x(attr), y[attr](d[attr])];
+                    }
+                }));
+            }
+        },
+        error: () => { alert('Fail to retrieve the full dataset'); }
+    });
 }

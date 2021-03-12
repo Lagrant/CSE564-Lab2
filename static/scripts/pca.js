@@ -244,7 +244,7 @@ function biplot(data, axes) {
 
     $.ajax({
         type: 'POST',
-        url: 'retrieve_attrs',
+        url: '/retrieve_attrs',
         contentType: 'application/json; charset=UTF-8',
         success: function (res) {
             if (res instanceof String) {
