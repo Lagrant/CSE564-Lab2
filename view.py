@@ -28,7 +28,7 @@ def index_page2(name=None):
 
     return render_template('index.html', name=name)
 
-@app.route('/task2')
+@app.route('/lab2b')
 def index_task2(name=None):
 
     return render_template('index2.html', name=name)

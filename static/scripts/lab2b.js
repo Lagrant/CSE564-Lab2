@@ -198,7 +198,7 @@ function parallelCoorPlot(div) {
             
             var data = [];
             res[attrs[0]].forEach(function (_, i) {
-                temp = {};
+                var temp = {};
                 attrs.forEach(function (attr) {
                     temp[attr] = res[attr][i];
                 });

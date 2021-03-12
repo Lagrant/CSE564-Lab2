@@ -54,8 +54,8 @@ function screePlot(data, axes) {
         .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
     
     var bar = svg.selectAll('.bar')
-        .data(data)
-        .enter().append('g')
+        .data(data).enter()
+        .append('g')
         .attr('class', 'evs')
         .attr('transform', function (d, i) { return 'translate(' + x(i) + ',' + y(d) + ')'; });
 
@@ -214,8 +214,7 @@ function biplot(data, axes) {
 
     svg.append('g')
         .selectAll('dot')
-        .data(data)
-        .enter()
+        .data(data).enter()
         .append('circle')
         .attr('cx', (d) => { return x(d[0]); })
         .attr('cy', (d) => { return y(d[1]); })
@@ -441,31 +440,29 @@ function scatterPlotMatrix() {
             });
 
             svg.selectAll('.x.axis')
-                .data(data)
-                .enter().append('g')
+                .data(data).enter()
+                .append('g')
                 .attr('class', 'x axis')
                 .attr('transform', function(_, i) { return 'translate(' + i * size + ',' + (height + 20) + ')'; })
                 .each(function(d) { 
                     x.domain(d3.extent(d)); 
-                    d3.select(this)
-                        .call(xAxis);
+                    d3.select(this).call(xAxis);
                 });
             svg.selectAll('.y.axis')
-                .data(data)
-                .enter().append('g')
+                .data(data).enter()
+                .append('g')
                 .attr('class', 'y axis')
                 .attr('transform', function(_, i) { return 'translate(0,' + i * size + ')'; })
                 .each(function(d) { 
                     y.domain(d3.extent(d)); 
-                    d3.select(this)
-                        .call(yAxis); 
+                    d3.select(this).call(yAxis); 
                 });
 
             var cell = svg.append('g')
                 .selectAll('g')
                 .data(cross(keys, keys)).enter()
                 .append('g')
-                .attr('transform', (c) => `translate(${c.i * size},${c.j * size})`);
+                .attr('transform', (c) => {`translate(${c.i * size},${c.j * size})`});
 
             cell.append('rect')
                 .attr('fill', 'none')
@@ -474,8 +471,8 @@ function scatterPlotMatrix() {
                 .attr('y', padding / 2 + 0.5)
                 .attr('width', size - padding)
                 .attr('height', size - padding);
+            
             cell.each(function (c) {
-
                 x.domain(d3.extent(data[c.i]));
                 y.domain(d3.extent(data[c.j]));
                 d3.select(this)
