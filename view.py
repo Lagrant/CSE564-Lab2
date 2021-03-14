@@ -16,6 +16,7 @@ full_file_name = ''
 components = []
 frame = pd.DataFrame()
 lsttypes = []
+lsttypes1 = []
 nframe = pd.DataFrame()
 
 @app.route('/')
@@ -125,15 +126,20 @@ def do_mds():
     if (request.method == 'GET'):
         return 'Invalid request'
     
-    disMatrix = pd.DataFrame(squareform(pdist(nframe)), columns=nframe.index, index=nframe.index)
+    global lsttypes1
+    frame = pd.read_csv(full_file_name)
+    nframe1 = frame.drop(['Legendary', 'name', 'Type 1', 'Type 2', 'Generation'], axis=1)
+    disMatrix = pd.DataFrame(squareform(pdist(nframe1)), columns=nframe1.index, index=nframe1.index)
     data_embedding = MDS(n_components=2, dissimilarity='precomputed')
     data_points = data_embedding.fit_transform(disMatrix)
 
-    corrMatrix = nframe.corr()
+    corrMatrix = nframe1.corr()
     var_embedding = MDS(n_components=2, dissimilarity='precomputed')
     var_points = var_embedding.fit_transform(corrMatrix)
-    # pd.DataFrame(data_points).to_csv('./data/data_points.csv', index=False)
-    # pd.DataFrame(var_points).to_csv('./data/var_points.csv', index=False)
+    pd.DataFrame(data_points).to_csv('./data/data_points.csv', index=False)
+    pd.DataFrame(var_points).to_csv('./data/var_points.csv', index=False)
+    lsttypes = nframe1.columns.values.tolist()
+    lsttypes1 = lsttypes
 
     return {'data': data_points.tolist(), 'var': var_points.tolist(), 'varNames': lsttypes}
 
@@ -145,7 +151,7 @@ def do_mds1():
     data_points = pd.read_csv('./data/data_points.csv')
     var_points = pd.read_csv('./data/var_points.csv')
 
-    return {'data': data_points.values.tolist(), 'var': var_points.values.tolist(), 'varNames': lsttypes}
+    return {'data': data_points.values.tolist(), 'var': var_points.values.tolist(), 'varNames': lsttypes1}
 
 @app.route('/full_dataset', methods=['POST','GET'])
 def retrieve_full_dataset():
@@ -156,6 +162,18 @@ def retrieve_full_dataset():
     frame.drop(['name', 'Type 2'], axis=1, inplace=True)
     # frame['Legendary'] = frame['Legendary'].apply(lambda x: int(x))
     data = frame.to_dict()
+    for col in data:
+        data[col] = list(data[col].values())
+    return data
+
+@app.route('/num_dataset', methods=['POST','GET'])
+def retrieve_num_dataset():
+    if (request.method == 'GET'):
+        return 'Invalid request'
+    
+    frame = pd.read_csv(full_file_name)
+    nframe1 = frame.drop(['Legendary', 'name', 'Type 1', 'Type 2', 'Generation'], axis=1)
+    data = nframe1.to_dict()
     for col in data:
         data[col] = list(data[col].values())
     return data

@@ -1,9 +1,11 @@
+var PCPOrder = [];
+
 var uploadComp = function(evt) {
     token = evt.target.responseText;
     console.log(token);
     $.ajax({
         type: 'POST',
-        url: '/mds1',
+        url: '/mds',
         contentType: 'application/json; charset=UTF-8',
         success: function (res) {
             var dataCoors = (function (){
@@ -45,7 +47,8 @@ var uploadComp = function(evt) {
             })();
             plotScatter(d3.select('#data-mds-plot'), dataCoors);
             plotScatter(d3.select('#var-mds-plot'), varCoors);
-            parallelCoorPlot(d3.select('#paral-coor-plot'));
+            parallelCoorPlot(d3.select('#paral-coor-plot'), '/full_dataset');
+            parallelCoorPlot(d3.select('#paral-num-plot'), '/num_dataset');
         },
         error: () => { alert('Fail to do MDS!'); }
     });
@@ -84,7 +87,7 @@ function plotScatter(div, points) {
         .attr('cy', (d) => { return y(d[1]); })
         .attr('r', points.size)
         .attr('fill', points.color)
-        .attr('fill-opacity', 0.7)
+        .attr('fill-opacity', 0.7);
 
     svg.append('g')
         .attr('class', 'x axis')
@@ -143,6 +146,37 @@ function plotScatter(div, points) {
     }
 
     function plotVarScatter() {
+
+        svg.selectAll('.dot')
+            .attr('class', (_, i) => { return points.names[i]; })
+            .style('cursor', 'pointer')
+            .style('stroke', 'darkblue')
+            .style('stroke-width', '3px')
+            .style('stroke-opacity', 0)
+            .on('click', function () {
+                var dot = d3.select(this);
+                if (dot.style('stroke-opacity') == 0) {
+                    dot.style('stroke-opacity', 1);
+                    PCPOrder.push(dot.attr('class'));
+                } else {
+                    dot.style('stroke-opacity', 0);
+                    var attrName = dot.attr('class');
+                    for (let i = 0, len = PCPOrder.length; i < len; i++) {
+                        if (PCPOrder[i] !== attrName) {
+                            continue;
+                        }
+                        if (i === len - 1) {
+                            PCPOrder.length = len - 1;
+                            break;
+                        }
+                        for (let j = i; j < len; j++) {
+                            PCPOrder[j] = PCPOrder[j+1];
+                        }
+                        PCPOrder.length = len - 1;
+                        break;
+                    }
+                }
+            });
         svg.selectAll('.attr-name')
             .data(points.coors).enter()
             .append('text')
@@ -155,7 +189,7 @@ function plotScatter(div, points) {
 
 }
 
-function parallelCoorPlot(div) {
+function parallelCoorPlot(div, url) {
     var width = parseInt(div.style('width')) - margin.left - margin.right;
     var height = parseInt(div.style('height')) - margin.top - margin.left;
 
@@ -166,7 +200,7 @@ function parallelCoorPlot(div) {
         .attr('transform', 'translate(' + (margin.left - 70) + ',' + margin.top + ')');
     $.ajax({
         type: 'POST',
-        url: '/full_dataset',
+        url: url,
         contentType: 'application/json; charset=UTF-8',
         success: function (res) {
             if (res instanceof String) {
