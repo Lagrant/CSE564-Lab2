@@ -21,15 +21,22 @@
                 <input type="file" id="upload" onchange="uploadFile(this)" />
             </form>
             
-            <div class='cluster-button' onclick="cluster()">
+            <div class='cluster button' onclick="cluster()">
                 Cluster
+            </div>
+            <div id="num-pcp" class='reorder button'>
+                Reorder Numerical PCP
+            </div>
+            <div id="full-pcp" class='reorder button'>
+                Reorder Full PCP
             </div>
         </div>
         <div id="vis" class="vis">
             <div id="data-mds-plot" class="data plot"></div>
             <div id="var-mds-plot" class="var plot"></div>
-            <div id="paral-coor-plot" class="paral plot"></div>
+            
             <div id="paral-num-plot" class="paral-num plot"></div>
+            <div id="paral-coor-plot" class="paral plot"></div>
         </div>
     </body>
 </html>

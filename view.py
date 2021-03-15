@@ -100,7 +100,6 @@ def scatters():
 def cluster():
     if (request.method == 'GET'):
         return 'Invalid request'
-
     kmeans = KMeans(n_clusters=9, random_state=0).fit(nframe.values)
     return jsonify(kmeans.labels_.tolist())
 
@@ -128,7 +127,7 @@ def do_mds():
     
     global lsttypes1
     frame = pd.read_csv(full_file_name)
-    nframe1 = frame.drop(['Legendary', 'name', 'Type 1', 'Type 2', 'Generation'], axis=1)
+    nframe1 = frame.drop(['Legendary', 'name', 'Type1', 'Type2', 'Generation'], axis=1)
     disMatrix = pd.DataFrame(squareform(pdist(nframe1)), columns=nframe1.index, index=nframe1.index)
     data_embedding = MDS(n_components=2, dissimilarity='precomputed')
     data_points = data_embedding.fit_transform(disMatrix)
@@ -159,11 +158,11 @@ def retrieve_full_dataset():
         return 'Invalid request'
 
     frame = pd.read_csv(full_file_name)
-    frame.drop(['name', 'Type 2'], axis=1, inplace=True)
+    frame.drop(['name', 'Type2'], axis=1, inplace=True)
     # frame['Legendary'] = frame['Legendary'].apply(lambda x: int(x))
-    data = frame.to_dict()
-    for col in data:
-        data[col] = list(data[col].values())
+    data = {}
+    for col in frame.columns:
+        data[col] = frame[col].values.tolist()
     return data
 
 @app.route('/num_dataset', methods=['POST','GET'])
@@ -172,10 +171,10 @@ def retrieve_num_dataset():
         return 'Invalid request'
     
     frame = pd.read_csv(full_file_name)
-    nframe1 = frame.drop(['Legendary', 'name', 'Type 1', 'Type 2', 'Generation'], axis=1)
-    data = nframe1.to_dict()
-    for col in data:
-        data[col] = list(data[col].values())
+    nframe1 = frame.drop(['name', 'Type1', 'Type2', 'Generation', 'Legendary'], axis=1)
+    data = {}
+    for col in nframe1:
+        data[col] = nframe1[col].values.tolist()
     return data
 
 def get_axis(compos, idx):
