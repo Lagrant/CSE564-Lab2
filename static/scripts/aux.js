@@ -1,4 +1,7 @@
 var margin = { left: 90, right: 60, top: 70, bottom: 90 };
+var clusters = [];
+var color = d3.scale.category20();
+
 var uploadFile = function(ob){
     filename = ob.files[0].name;
     if (filename.lastIndexOf('.') !== -1) {
@@ -33,7 +36,6 @@ var cluster = function () {
             }
             clusters = res;
             numOfClusters = 9; // this is verified at the backend server
-            var color = d3.scale.category20();
             res.forEach(function (d, i) {
                 d3.selectAll('.point'+i)
                     .style('fill', color(d));

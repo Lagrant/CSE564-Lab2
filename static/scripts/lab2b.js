@@ -9,7 +9,7 @@ var uploadComp = function(evt) {
     console.log(token);
     $.ajax({
         type: 'POST',
-        url: '/mds1',
+        url: '/mds',
         contentType: 'application/json; charset=UTF-8',
         success: function (res) {
             names = res['varNames'];
@@ -164,24 +164,25 @@ function plotScatter(div, points) {
                 if (dot.style('stroke-opacity') == 0) {
                     dot.style('stroke-opacity', 1);
                     PCPNumOrder.push(dot.attr('class').split(' ')[0]);
-                } else {
-                    dot.style('stroke-opacity', 0);
-                    var attrName = dot.attr('class');
-                    for (let i = 0, len = PCPNumOrder.length; i < len; i++) {
-                        if (PCPNumOrder[i] !== attrName) {
-                            continue;
-                        }
-                        if (i === len - 1) {
-                            PCPNumOrder.length = len - 1;
-                            break;
-                        }
-                        for (let j = i; j < len; j++) {
-                            PCPNumOrder[j] = PCPNumOrder[j+1];
-                        }
-                        PCPNumOrder.length = len - 1;
-                        break;
-                    }
                 }
+                // } else {
+                //     dot.style('stroke-opacity', 0);
+                //     var attrName = dot.attr('class');
+                //     for (let i = 0, len = PCPNumOrder.length; i < len; i++) {
+                //         if (PCPNumOrder[i] !== attrName) {
+                //             continue;
+                //         }
+                //         if (i === len - 1) {
+                //             PCPNumOrder.length = len - 1;
+                //             break;
+                //         }
+                //         for (let j = i; j < len; j++) {
+                //             PCPNumOrder[j] = PCPNumOrder[j+1];
+                //         }
+                //         PCPNumOrder.length = len - 1;
+                //         break;
+                //     }
+                // }
             });
         svg.selectAll('.attr-name')
             .data(points.coors).enter()
@@ -265,16 +266,25 @@ function parallelCoorPlot(div, url) {
                 .data(attrs).enter()
                 .append("g")
                 .attr('class', function (d) { return 'y axis ' + d; })
-                .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
-                .each(function(d) { 
+                .attr("transform", function (d) { return "translate(" + x(d) + ")"; })
+                .style('cursor', 'pointer')
+                .on('click', function (d) {
+                    var label = d3.select(this).select('.y-tick');
+                    if (label.style('fill') === 'rgb(0, 0, 0)') {
+                        label.style('fill', '#999');
+                        PCPFullOrder.push(label.text())
+                    }
+                })
+                .each(function (d) { 
                     d3.select(this).call(d3.svg.axis()
                         .scale(y[d])
                         .orient('left')); 
                 })
                 .append("text")
                 .style("text-anchor", "middle")
+                .attr('class', 'y-tick')
                 .attr("y", -9)
-                .text(function(d) { return d; })
+                .text(function (d) { return d; })
                 .style("fill", "black");
             
             (url === '/num_dataset') ? d3.select('#num-pcp').on('click', reorder) : d3.select('#full-pcp').on('click', reorder);
@@ -326,7 +336,13 @@ function parallelCoorPlot(div, url) {
                     .attr("d",  path1)
                     .attr('class', (_, i) => { return 'line' + i + ' paral-lines'; })
                     .style("fill", "none")
-                    .style("stroke", "steelblue")
+                    .style("stroke", function (_, i) {
+                        if (clusters.length === 0) {
+                            return 'steelblue';
+                        } else {
+                            return color(clusters[i]);
+                        }
+                    })
                     .style("opacity", 0.5);
             
                 finish();
@@ -334,6 +350,7 @@ function parallelCoorPlot(div, url) {
                 function finish() {
                     lst.length = 0;
                     d3.selectAll('.reorder-tag').style('stroke-opacity', 0);
+                    d3.selectAll('.y-tick').style('fill', '#000');
                 }
                 function path1(d) {
                     return d3.svg.line()(currNames.map(function (name) {

@@ -1,6 +1,5 @@
 var intrDimIdx = -1;
 var attrs = [{'attr': ''}];
-var clusters = [];
 
 var uploadComp = function(evt){
     token = evt.target.responseText;
@@ -486,7 +485,13 @@ function scatterPlotMatrix() {
             cell.selectAll('circle')
                 .attr('r', 3.5)
                 .attr('fill-opacity', 0.7)
-                .attr('fill', 'steelblue');
+                .attr('fill', function (_, i) {
+                    if (clusters.length === 0) {
+                        return 'steelblue';
+                    } else {
+                        return color(clusters[i]);
+                    }
+                });
             
             svg.append('g')
                 .style('font', 'bold 10px sans-serif')
